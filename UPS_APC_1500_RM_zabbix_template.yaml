@@ -1,0 +1,1025 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 0e60ac85bc3941e2a1d66a048ff164da
+      name: UPS
+  templates:
+    - uuid: fd15f68fd5654374a7260ea10f06c41b
+      template: 'UPS APC Smart-UPS 1500 RM by NUT'
+      name: 'UPS APC Smart-UPS 1500 RM by NUT'
+      description: |
+        Мониторинг ИБП на основе NUT.
+        
+        Основа: https://github.com/vasyna/Zabbix_nut_template/tree/main
+        Убрано автообнаружение.
+        
+        Создать узел ИБП, в котором указать Zabbix агент на том сервере, куда подключен ИБП и где настроен NUT. Прописать в макросах имя ИБП.
+        На тот же хост положить файлы:
+        -rw-r--r-- 1 root root /etc/zabbix/zabbix_agent2.d/nut-ups.conf
+        и
+        -r-x------ 1 zabbix zabbix /etc/zabbix/sh/nut-ups.sh
+        и перезапустить службу агента.
+      groups:
+        - name: UPS
+      items:
+        - uuid: 42cb9659eea94dec8e4bef7b73ae89d9
+          name: 'Уровень низкого заряда батарей'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.charge.low]'
+          delay: 1d
+          history: 7d
+          value_type: FLOAT
+          units: '%'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: ee87f2a502514aa0b7574fe11de69af7
+          name: 'Уровень заряда для предупреждения'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.charge.warning]'
+          delay: 1d
+          history: 7d
+          value_type: FLOAT
+          units: '%'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 81fd7dcf26bc4dd49ccceb2366659f5a
+          name: 'Текущий уровень заряда батарей'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.charge]'
+          history: 7d
+          value_type: FLOAT
+          units: '%'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+          triggers:
+            - uuid: 29926721b8ca437c8ee7536cf538a526
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},battery.charge])<40'
+              name: 'Уровень заряда батарей < 40%'
+              priority: DISASTER
+              description: 'Уровень заряда батарей < 40%'
+            - uuid: cd1096a5a96840978bf62d568d696b63
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},battery.charge])<80'
+              name: 'Уровень заряда батарей < 80%'
+              priority: WARNING
+              description: 'Уровень заряда батарей < 80%'
+        - uuid: 9070c15b85224a8ea6cf42393d1e6eab
+          name: 'Дата производства батарей'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.mfr.date]'
+          delay: 1d
+          trends: '0'
+          value_type: CHAR
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 71e186c09cde45e4b66ca2a2b8fa8037
+          name: 'Минимальное время работы от батарей'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.runtime.low]'
+          delay: 1d
+          history: 7d
+          value_type: FLOAT
+          units: мин
+          description: 'Минимальное время работы от батарей для срабатывания триггера на выключение системы'
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.016666666666667'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 0ec48d6ab120486486a4418dd08cb1e4
+          name: 'Расчётное время работы от батарей'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.runtime]'
+          history: 7d
+          value_type: FLOAT
+          units: мин
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.016666666666667'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 49f765cf0da341bfbf88dcf031035037
+          name: 'Температура батарей'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.temperature]'
+          history: 7d
+          units: °C
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+          triggers:
+            - uuid: 8ecfd0046ce448b5a49f62e045548a29
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},battery.temperature])>35'
+              name: 'Высокая температура батарей'
+              priority: HIGH
+              type: MULTIPLE
+        - uuid: 66ab7a17873746d6bb6361e7b8592e81
+          name: 'Напряжение батарей номинальное'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.voltage.nominal]'
+          delay: 1d
+          history: 7d
+          value_type: FLOAT
+          units: В
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 06e0ba6b54694a8abd4eb9e3a4ae197f
+          name: 'Напряжение батарей текущее'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.voltage]'
+          history: 7d
+          value_type: FLOAT
+          units: В
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: fcd20d014b4b447f85324891bdec0a08
+          name: 'Чувствительность ИБП'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},input.sensitivity]'
+          delay: 1d
+          trends: '0'
+          value_type: CHAR
+          description: 'От настроек чувствительности ИБП зависит насколько быстро он переключается на резервное питание при обнаружении проблемы'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 563449e6e82542aab2dd5da12cc7a1fa
+          name: 'Высокий порог напряжения на входе'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},input.transfer.high]'
+          delay: 1d
+          history: 7d
+          value_type: FLOAT
+          units: В
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: bc165a9dd10f460cb7423fbcb2469912
+          name: 'Низкий порог напряжения на входе'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},input.transfer.low]'
+          delay: 1d
+          history: 7d
+          value_type: FLOAT
+          units: В
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: fc5287d3bd874c99870ede01f169c06e
+          name: 'Напряжение на входе'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},input.voltage]'
+          delay: 10s
+          value_type: FLOAT
+          units: В
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 22ba6f7061004976913cb24bfbb84ebe
+          name: 'Частота на выходе'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},output.frequency]'
+          history: 7d
+          value_type: FLOAT
+          units: Гц
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 7eaeabfda43444c5bd00acb35daec533
+          name: 'Напряжение на выходе'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},output.voltage]'
+          delay: 10s
+          history: 7d
+          value_type: FLOAT
+          units: В
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 36db6375edb341d2a08d8169ed35c016
+          name: 'Тревога 2'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-2]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 3b33610a48bb4aab9cfc667281b436a1
+          name: 'Тревога 3'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-3]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 4b538d670ee44d97afd9ebe60c4cb915
+          name: 'Тревога 4'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-4]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: deaa0c9c6d684f39ba7c7bfe9cae5e24
+          name: 'Тревога 5'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-5]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 3654cd92b8c9474b9baf8df3133e38fb
+          name: 'Тревога 6'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-6]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 7e0ccabf7c1b49a1b7b58ca0b2e8bc4d
+          name: 'Тревога 7'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-7]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 3a3639173d4b462d88a72fbbe9c5308c
+          name: 'Тревога 8'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-8]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 79ec206686934acd9faea2060641847b
+          name: 'Тревога 9'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-9]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: f64fbd1356cf47d3bec8ad901d70100a
+          name: 'Тревога 10'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm-10]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 500fa1b207d7495d813c7f37e1fe182f
+          name: Тревога
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.alarm]'
+          delay: 10s
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Alarm'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 603c19f14fda466ab38eb728f5a141d4
+          name: 'Звуковой сигнал'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.beeper.status]'
+          delay: 1d
+          trends: '0'
+          value_type: CHAR
+          description: 'Включён или выключен звуковой сигнал у ИБП при пропадании напряжения в сети.'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: ba5c7607bc0d44f0835a456f6bc13e9f
+          name: Нагрузка
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.load]'
+          delay: 10s
+          history: 7d
+          value_type: FLOAT
+          units: '%'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 3bf0b66438cc4cddb8c4b5c91ce85d24
+          name: 'Производитель ИБП'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.mfr]'
+          delay: 1d
+          trends: '0'
+          value_type: CHAR
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 5c53d53c69c34a6e9bb0571b39043b0b
+          name: 'Модель ИБП'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.model]'
+          delay: 1d
+          trends: '0'
+          value_type: CHAR
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: f60925af51b14af183ecdeb25291b9a2
+          name: 'Серийный номер'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.serial]'
+          delay: 1d
+          trends: '0'
+          value_type: CHAR
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 9387a64f18c34896adafc4aa4dc90825
+          name: 'Состояние 2'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.status-2]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Status'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 6281d38f829a41c38eae48402f5bf8dc
+          name: 'Состояние 3'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.status-3]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Status'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: c17b3f4286b448b18c0ec1cd87ef5d41
+          name: 'Состояние 4'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.status-4]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Status'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 41214d6e3867478080d5581aae75ebb6
+          name: 'Состояние 5'
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.status-5]'
+          delay: 10s
+          history: 7d
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Status'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+        - uuid: 9ce8b88dbe7c40bb8c3a6c2dae7f5300
+          name: Состояние
+          key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.status]'
+          delay: 10s
+          trends: '0'
+          valuemap:
+            name: 'NUT UPS Status'
+          tags:
+            - tag: Application
+              value: 'NUT UPS'
+          triggers:
+            - uuid: c000f5fbf0ef4d93b47148c5b7464113
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=0'
+              name: 'Неизвестное состояние'
+              priority: DISASTER
+            - uuid: fcf36592ce544f1fa2db776ae2542d85
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=5'
+              name: 'Состояние - Батареи заряжаются'
+              priority: INFO
+            - uuid: 52af539e6082433caa3b17033aa2cdb0
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=7'
+              name: 'Состояние - Батарейная защита отсутствует'
+              priority: DISASTER
+            - uuid: fc7606a498934a27a2e39cc5a1478408
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=9'
+              name: 'Состояние - Выключен'
+              priority: DISASTER
+              description: 'ИБП выключен!'
+            - uuid: 709f7e89ecdd4e179ea76003845dcfde
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=8'
+              name: 'Состояние - Калибровка'
+              priority: INFO
+              description: 'Калибровка батарей для определения их ёмкости и времени работы от батарей'
+            - uuid: 6e8404e15f1a48f8b687458654becbbf
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=3'
+              name: 'Состояние - Низкий уровень заряда батарей'
+              priority: DISASTER
+              description: 'Низкий уровень заряда батарей'
+            - uuid: 530e51bca8c0471e8c2d3565e9242b09
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=10'
+              name: 'Состояние - Перегрузка'
+              priority: DISASTER
+              description: 'Нагрузка, подключённая к ИБП, выше допустимой!'
+            - uuid: d4f343d0fd204c71a858b1c1247df606
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=2'
+              name: 'Состояние - Работа от батарей'
+              priority: HIGH
+              description: 'Работа от батарей'
+              type: MULTIPLE
+            - uuid: 2a9647e09f2f4be392495aaeedc513ab
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=12'
+              name: 'Состояние - Режим повышения входного напряжения'
+              priority: WARNING
+              description: 'BOOST - Режим повышения входного напряжения'
+            - uuid: 513494717a20446d9fcd3365075c969d
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=11'
+              name: 'Состояние - Режим понижения входного напряжения'
+              priority: WARNING
+              description: 'TRIM - Режим понижения входного напряжения'
+            - uuid: 8dc8008fa6f840d9b6c797af9defafad
+              expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status])=4'
+              name: 'Состояние - Требуется замена батарей'
+              priority: HIGH
+              description: 'Требуется замена батарей'
+      tags:
+        - tag: class
+          value: hardware
+        - tag: target
+          value: ups
+      macros:
+        - macro: '{$UPSHOST}'
+          description: 'Хост, к которому подключен ИБП'
+        - macro: '{$UPSNAME}'
+          description: 'Имя устройства из файла ups.conf'
+      valuemaps:
+        - uuid: 5b4628735ba347e3bd2e2f3881d12a62
+          name: 'NUT UPS Alarm'
+          mappings:
+            - value: '0'
+              newvalue: 'Всё нормально'
+            - value: '1'
+              newvalue: INVERTER_AC_OVER_VOLTAGE
+            - value: '2'
+              newvalue: INVERTER_AC_UNDER_VOLTAGE
+            - value: '3'
+              newvalue: INVERTER_OVER_OR_UNDER_FREQ
+            - value: '4'
+              newvalue: BYPASS_AC_OVER_VOLTAGE
+            - value: '5'
+              newvalue: BYPASS_AC_UNDER_VOLTAGE
+            - value: '6'
+              newvalue: BYPASS_OVER_OR_UNDER_FREQ
+            - value: '7'
+              newvalue: INPUT_AC_OVER_VOLTAGE
+            - value: '8'
+              newvalue: INPUT_AC_UNDER_VOLTAGE
+            - value: '9'
+              newvalue: INPUT_UNDER_OR_OVER_FREQ
+            - value: '10'
+              newvalue: OUTPUT_OVER_VOLTAGE
+            - value: '11'
+              newvalue: OUTPUT_UNDER_VOLTAGE
+            - value: '12'
+              newvalue: OUTPUT_UNDER_OR_OVER_FREQ
+            - value: '13'
+              newvalue: REMOTE_EMERGENCY_PWR_OFF
+            - value: '14'
+              newvalue: REMOTE_GO_TO_BYPASS
+            - value: '15'
+              newvalue: BUILDING_ALARM_6
+            - value: '16'
+              newvalue: BUILDING_ALARM_5
+            - value: '17'
+              newvalue: BUILDING_ALARM_4
+            - value: '18'
+              newvalue: BUILDING_ALARM_3
+            - value: '19'
+              newvalue: BUILDING_ALARM_2
+            - value: '20'
+              newvalue: BUILDING_ALARM_1
+            - value: '21'
+              newvalue: STATIC_SWITCH_OVER_TEMP
+            - value: '22'
+              newvalue: CHARGER_OVER_TEMP
+            - value: '23'
+              newvalue: CHARGER_LOGIC_PWR_FAIL
+            - value: '24'
+              newvalue: CHARGER_OVER_VOLTAGE_OR_CURRENT
+            - value: '25'
+              newvalue: INVERTER_OVER_TEMP
+            - value: '26'
+              newvalue: OUTPUT_OVERLOAD
+            - value: '27'
+              newvalue: RECTIFIER_INPUT_OVER_CURRENT
+            - value: '28'
+              newvalue: INVERTER_OUTPUT_OVER_CURRENT
+            - value: '29'
+              newvalue: DC_LINK_OVER_VOLTAGE
+            - value: '30'
+              newvalue: DC_LINK_UNDER_VOLTAGE
+            - value: '31'
+              newvalue: RECTIFIER_FAILED
+            - value: '32'
+              newvalue: INVERTER_FAULT
+            - value: '33'
+              newvalue: BATTERY_CONNECTOR_FAIL
+            - value: '34'
+              newvalue: BYPASS_BREAKER_FAIL
+            - value: '35'
+              newvalue: CHARGER_FAIL
+            - value: '36'
+              newvalue: RAMP_UP_FAILED
+            - value: '37'
+              newvalue: STATIC_SWITCH_FAILED
+            - value: '38'
+              newvalue: ANALOG_AD_REF_FAIL
+            - value: '39'
+              newvalue: BYPASS_UNCALIBRATED
+            - value: '40'
+              newvalue: RECTIFIER_UNCALIBRATED
+            - value: '41'
+              newvalue: OUTPUT_UNCALIBRATED
+            - value: '42'
+              newvalue: INVERTER_UNCALIBRATED
+            - value: '43'
+              newvalue: DC_VOLT_UNCALIBRATED
+            - value: '44'
+              newvalue: OUTPUT_CURRENT_UNCALIBRATED
+            - value: '45'
+              newvalue: RECTIFIER_CURRENT_UNCALIBRATED
+            - value: '46'
+              newvalue: BATTERY_CURRENT_UNCALIBRATED
+            - value: '47'
+              newvalue: INVERTER_ON_OFF_STAT_FAIL
+            - value: '48'
+              newvalue: BATTERY_CURRENT_LIMIT
+            - value: '49'
+              newvalue: INVERTER_STARTUP_FAIL
+            - value: '50'
+              newvalue: ANALOG_BOARD_AD_STAT_FAIL
+            - value: '51'
+              newvalue: OUTPUT_CURRENT_OVER_100
+            - value: '52'
+              newvalue: BATTERY_GROUND_FAULT
+            - value: '53'
+              newvalue: WAITING_FOR_CHARGER_SYNC
+            - value: '54'
+              newvalue: NV_RAM_FAIL
+            - value: '55'
+              newvalue: ANALOG_BOARD_AD_TIMEOUT
+            - value: '56'
+              newvalue: SHUTDOWN_IMMINENT
+            - value: '57'
+              newvalue: BATTERY_LOW
+            - value: '58'
+              newvalue: UTILITY_FAIL
+            - value: '59'
+              newvalue: OUTPUT_SHORT_CIRCUIT
+            - value: '60'
+              newvalue: UTILITY_NOT_PRESENT
+            - value: '61'
+              newvalue: FULL_TIME_CHARGING
+            - value: '62'
+              newvalue: FAST_BYPASS_COMMAND
+            - value: '63'
+              newvalue: AD_ERROR
+            - value: '64'
+              newvalue: INTERNAL_COM_FAIL
+            - value: '65'
+              newvalue: RECTIFIER_SELFTEST_FAIL
+            - value: '66'
+              newvalue: RECTIFIER_EEPROM_FAIL
+            - value: '67'
+              newvalue: RECTIFIER_EPROM_FAIL
+            - value: '68'
+              newvalue: INPUT_LINE_VOLTAGE_LOSS
+            - value: '69'
+              newvalue: BATTERY_DC_OVER_VOLTAGE
+            - value: '70'
+              newvalue: POWER_SUPPLY_OVER_TEMP
+            - value: '71'
+              newvalue: POWER_SUPPLY_FAIL
+            - value: '72'
+              newvalue: POWER_SUPPLY_5V_FAIL
+            - value: '73'
+              newvalue: POWER_SUPPLY_12V_FAIL
+            - value: '74'
+              newvalue: HEATSINK_OVER_TEMP
+            - value: '75'
+              newvalue: HEATSINK_TEMP_SENSOR_FAIL
+            - value: '76'
+              newvalue: RECTIFIER_CURRENT_OVER_125
+            - value: '77'
+              newvalue: RECTIFIER_FAULT_INTERRUPT_FAIL
+            - value: '78'
+              newvalue: RECTIFIER_POWER_CAPASITOR_FAIL
+            - value: '79'
+              newvalue: INVERTER_PROGRAM_STACK_ERROR
+            - value: '80'
+              newvalue: INVERTER_BOARD_SELFTEST_FAIL
+            - value: '81'
+              newvalue: INVERTER_AD_SELFTEST_FAIL
+            - value: '82'
+              newvalue: INVERTER_RAM_SELFTEST_FAIL
+            - value: '83'
+              newvalue: NV_MEMORY_CHECKSUM_FAIL
+            - value: '84'
+              newvalue: PROGRAM_CHECKSUM_FAIL
+            - value: '85'
+              newvalue: INVERTER_CPU_SELFTEST_FAIL
+            - value: '86'
+              newvalue: NETWORK_NOT_RESPONDING
+            - value: '87'
+              newvalue: FRONT_PANEL_SELFTEST_FAIL
+            - value: '88'
+              newvalue: NODE_EEPROM_VERIFICATION_ERROR
+            - value: '89'
+              newvalue: OUTPUT_AC_OVER_VOLT_TEST_FAIL
+            - value: '90'
+              newvalue: OUTPUT_DC_OVER_VOLTAGE
+            - value: '91'
+              newvalue: INPUT_PHASE_ROTATION_ERROR
+            - value: '92'
+              newvalue: INVERTER_RAMP_UP_TEST_FAILED
+            - value: '93'
+              newvalue: INVERTER_OFF_COMMAND
+            - value: '94'
+              newvalue: INVERTER_ON_COMMAND
+            - value: '95'
+              newvalue: TO_BYPASS_COMMAND
+            - value: '96'
+              newvalue: FROM_BYPASS_COMMAND
+            - value: '97'
+              newvalue: AUTO_MODE_COMMAND
+            - value: '98'
+              newvalue: EMERGENCY_SHUTDOWN_COMMAND
+            - value: '99'
+              newvalue: SETUP_SWITCH_OPEN
+            - value: '100'
+              newvalue: INVERTER_OVER_VOLT_INT
+            - value: '101'
+              newvalue: INVERTER_UNDER_VOLT_INT
+            - value: '102'
+              newvalue: ABSOLUTE_DCOV_ACOV
+            - value: '103'
+              newvalue: PHASE_A_CURRENT_LIMIT
+            - value: '104'
+              newvalue: PHASE_B_CURRENT_LIMIT
+            - value: '105'
+              newvalue: PHASE_C_CURRENT_LIMIT
+            - value: '106'
+              newvalue: BYPASS_NOT_AVAILABLE
+            - value: '107'
+              newvalue: RECTIFIER_BREAKER_OPEN
+            - value: '108'
+              newvalue: BATTERY_CONTACTOR_OPEN
+            - value: '109'
+              newvalue: INVERTER_CONTACTOR_OPEN
+            - value: '110'
+              newvalue: BYPASS_BREAKER_OPEN
+            - value: '111'
+              newvalue: INV_BOARD_ACOV_INT_TEST_FAIL
+            - value: '112'
+              newvalue: INVERTER_OVER_TEMP_TRIP
+            - value: '113'
+              newvalue: INV_BOARD_ACUV_INT_TEST_FAIL
+            - value: '114'
+              newvalue: INVERTER_VOLTAGE_FEEDBACK_ERROR
+            - value: '115'
+              newvalue: DC_UNDER_VOLTAGE_TIMEOUT
+            - value: '116'
+              newvalue: AC_UNDER_VOLTAGE_TIMEOUT
+            - value: '117'
+              newvalue: DC_UNDER_VOLTAGE_WHILE_CHARGE
+            - value: '118'
+              newvalue: INVERTER_VOLTAGE_BIAS_ERROR
+            - value: '119'
+              newvalue: RECTIFIER_PHASE_ROTATION
+            - value: '120'
+              newvalue: BYPASS_PHASER_ROTATION
+            - value: '121'
+              newvalue: SYSTEM_INTERFACE_BOARD_FAIL
+            - value: '122'
+              newvalue: PARALLEL_BOARD_FAIL
+            - value: '123'
+              newvalue: LOST_LOAD_SHARING_PHASE_A
+            - value: '124'
+              newvalue: LOST_LOAD_SHARING_PHASE_B
+            - value: '125'
+              newvalue: LOST_LOAD_SHARING_PHASE_C
+            - value: '126'
+              newvalue: DC_OVER_VOLTAGE_TIMEOUT
+            - value: '127'
+              newvalue: BATTERY_TOTALLY_DISCHARGED
+            - value: '128'
+              newvalue: INVERTER_PHASE_BIAS_ERROR
+            - value: '129'
+              newvalue: INVERTER_VOLTAGE_BIAS_ERROR_2
+            - value: '130'
+              newvalue: DC_LINK_BLEED_COMPLETE
+            - value: '131'
+              newvalue: LARGE_CHARGER_INPUT_CURRENT
+            - value: '132'
+              newvalue: INV_VOLT_TOO_LOW_FOR_RAMP_LEVEL
+            - value: '133'
+              newvalue: LOSS_OF_REDUNDANCY
+            - value: '134'
+              newvalue: LOSS_OF_SYNC_BUS
+            - value: '135'
+              newvalue: RECTIFIER_BREAKER_SHUNT_TRIP
+            - value: '136'
+              newvalue: LOSS_OF_CHARGER_SYNC
+            - value: '137'
+              newvalue: INVERTER_LOW_LEVEL_TEST_TIMEOUT
+            - value: '138'
+              newvalue: OUTPUT_BREAKER_OPEN
+            - value: '139'
+              newvalue: CONTROL_POWER_ON
+            - value: '140'
+              newvalue: INVERTER_ON
+            - value: '141'
+              newvalue: CHARGER_ON
+            - value: '142'
+              newvalue: BYPASS_ON
+            - value: '143'
+              newvalue: BYPASS_POWER_LOSS
+            - value: '144'
+              newvalue: ON_MANUAL_BYPASS
+            - value: '145'
+              newvalue: BYPASS_MANUAL_TURN_OFF
+            - value: '146'
+              newvalue: INVERTER_BLEEDING_DC_LINK_VOLT
+            - value: '147'
+              newvalue: CPU_ISR_ERROR
+            - value: '148'
+              newvalue: SYSTEM_ISR_RESTART
+            - value: '149'
+              newvalue: PARALLEL_DC
+            - value: '150'
+              newvalue: BATTERY_NEEDS_SERVICE
+            - value: '151'
+              newvalue: BATTERY_CHARGING
+            - value: '152'
+              newvalue: BATTERY_NOT_CHARGED
+            - value: '153'
+              newvalue: DISABLED_BATTERY_TIME
+            - value: '154'
+              newvalue: SERIES_7000_ENABLE
+            - value: '155'
+              newvalue: OTHER_UPS_ON
+            - value: '156'
+              newvalue: PARALLEL_INVERTER
+            - value: '157'
+              newvalue: UPS_IN_PARALLEL
+            - value: '158'
+              newvalue: OUTPUT_BREAKER_REALY_FAIL
+            - value: '159'
+              newvalue: CONTROL_POWER_OFF
+            - value: '160'
+              newvalue: LEVEL_2_OVERLOAD_PHASE_A
+            - value: '161'
+              newvalue: LEVEL_2_OVERLOAD_PHASE_B
+            - value: '162'
+              newvalue: LEVEL_2_OVERLOAD_PHASE_C
+            - value: '163'
+              newvalue: LEVEL_3_OVERLOAD_PHASE_A
+            - value: '164'
+              newvalue: LEVEL_3_OVERLOAD_PHASE_B
+            - value: '165'
+              newvalue: LEVEL_3_OVERLOAD_PHASE_C
+            - value: '166'
+              newvalue: LEVEL_4_OVERLOAD_PHASE_A
+            - value: '167'
+              newvalue: LEVEL_4_OVERLOAD_PHASE_B
+            - value: '168'
+              newvalue: LEVEL_4_OVERLOAD_PHASE_C
+            - value: '169'
+              newvalue: UPS_ON_BATTERY
+            - value: '170'
+              newvalue: UPS_ON_BYPASS
+            - value: '171'
+              newvalue: LOAD_DUMPED
+            - value: '172'
+              newvalue: LOAD_ON_INVERTER
+            - value: '173'
+              newvalue: UPS_ON_COMMAND
+            - value: '174'
+              newvalue: UPS_OFF_COMMAND
+            - value: '175'
+              newvalue: LOW_BATTERY_SHUTDOWN
+            - value: '176'
+              newvalue: AUTO_ON_ENABLED
+            - value: '177'
+              newvalue: SOFTWARE_INCOMPABILITY_DETECTED
+            - value: '178'
+              newvalue: INVERTER_TEMP_SENSOR_FAILED
+            - value: '179'
+              newvalue: DC_START_OCCURED
+            - value: '180'
+              newvalue: IN_PARALLEL_OPERATION
+            - value: '181'
+              newvalue: SYNCING_TO_BYPASS
+            - value: '182'
+              newvalue: RAMPING_UPS_UP
+            - value: '183'
+              newvalue: INVERTER_ON_DELAY
+            - value: '184'
+              newvalue: CHARGER_ON_DELAY
+            - value: '185'
+              newvalue: WAITING_FOR_UTIL_INPUT
+            - value: '186'
+              newvalue: CLOSE_BYPASS_BREAKER
+            - value: '187'
+              newvalue: TEMPORARY_BYPASS_OPERATION
+            - value: '188'
+              newvalue: SYNCING_TO_OUTPUT
+            - value: '189'
+              newvalue: BYPASS_FAILURE
+            - value: '190'
+              newvalue: AUTO_OFF_COMMAND_EXECUTED
+            - value: '191'
+              newvalue: AUTO_ON_COMMAND_EXECUTED
+            - value: '192'
+              newvalue: BATTERY_TEST_FAILED
+            - value: '193'
+              newvalue: FUSE_FAIL
+            - value: '194'
+              newvalue: FAN_FAIL
+            - value: '195'
+              newvalue: SITE_WIRING_FAULT
+            - value: '196'
+              newvalue: BACKFEED_CONTACTOR_FAIL
+            - value: '197'
+              newvalue: ON_BUCK
+            - value: '198'
+              newvalue: ON_BOOST
+            - value: '199'
+              newvalue: ON_DOUBLE_BOOST
+            - value: '200'
+              newvalue: BATTERIES_DISCONNECTED
+            - value: '201'
+              newvalue: UPS_CABINET_OVER_TEMP
+            - value: '202'
+              newvalue: TRANSFORMER_OVER_TEMP
+            - value: '203'
+              newvalue: AMBIENT_UNDER_TEMP
+            - value: '204'
+              newvalue: AMBIENT_OVER_TEMP
+            - value: '205'
+              newvalue: CABINET_DOOR_OPEN
+            - value: '206'
+              newvalue: CABINET_DOOR_OPEN_VOLT_PRESENT
+            - value: '207'
+              newvalue: AUTO_SHUTDOWN_PENDING
+            - value: '208'
+              newvalue: TAP_SWITCHING_REALY_PENDING
+            - value: '209'
+              newvalue: UNABLE_TO_CHARGE_BATTERIES
+            - value: '210'
+              newvalue: STARTUP_FAILURE_CHECK_EPO
+            - value: '211'
+              newvalue: AUTOMATIC_STARTUP_PENDING
+            - value: '212'
+              newvalue: MODEM_FAILED
+            - value: '213'
+              newvalue: INCOMING_MODEM_CALL_STARTED
+            - value: '214'
+              newvalue: OUTGOING_MODEM_CALL_STARTED
+            - value: '215'
+              newvalue: MODEM_CONNECTION_ESTABLISHED
+            - value: '216'
+              newvalue: MODEM_CALL_COMPLETED_SUCCESS
+            - value: '217'
+              newvalue: MODEM_CALL_COMPLETED_FAIL
+            - value: '218'
+              newvalue: INPUT_BREAKER_FAIL
+            - value: '219'
+              newvalue: SYSINIT_IN_PROGRESS
+            - value: '220'
+              newvalue: AUTOCALIBRATION_FAIL
+            - value: '221'
+              newvalue: SELECTIVE_TRIP_OF_MODULE
+            - value: '222'
+              newvalue: INVERTER_OUTPUT_FAILURE
+            - value: '223'
+              newvalue: ABNORMAL_OUTPUT_VOLT_AT_STARTUP
+            - value: '224'
+              newvalue: RECTIFIER_OVER_TEMP
+            - value: '225'
+              newvalue: CONFIG_ERROR
+            - value: '226'
+              newvalue: REDUNDANCY_LOSS_DUE_TO_OVERLOAD
+            - value: '227'
+              newvalue: ON_ALTERNATE_AC_SOURCE
+            - value: '228'
+              newvalue: IN_HIGH_EFFICIENCY_MODE
+            - value: '229'
+              newvalue: SYSTEM_NOTICE_ACTIVE
+            - value: '230'
+              newvalue: SYSTEM_ALARM_ACTIVE
+            - value: '231'
+              newvalue: ALTERNATE_POWER_SOURCE_NOT_AVAILABLE
+            - value: '232'
+              newvalue: CURRENT_BALANCE_FAILURE
+            - value: '233'
+              newvalue: CHECK_AIR_FILTER
+            - value: '234'
+              newvalue: SUBSYSTEM_NOTICE_ACTIVE
+            - value: '235'
+              newvalue: SUBSYSTEM_ALARM_ACTIVE
+            - value: '236'
+              newvalue: CHARGER_ON_COMMAND
+            - value: '237'
+              newvalue: CHARGER_OFF_COMMAND
+            - value: '238'
+              newvalue: UPS_NORMAL
+            - value: '239'
+              newvalue: INVERTER_PHASE_ROTATION
+            - value: '240'
+              newvalue: UPS_OFF
+            - value: '241'
+              newvalue: EXTERNAL_COMMUNICATION_FAILURE
+            - value: '242'
+              newvalue: BATTERY_TEST_INPROGRESS
+            - value: '243'
+              newvalue: SYSTEM_TEST_INPROGRESS
+            - value: '244'
+              newvalue: BATTERY_TEST_ABORTED
+        - uuid: b9299aea804c4ad184f6ef349adf12aa
+          name: 'NUT UPS Status'
+          mappings:
+            - value: '0'
+              newvalue: Неизвестно
+            - value: '1'
+              newvalue: 'OL = Работа от сети'
+            - value: '2'
+              newvalue: 'OB = Работа от батарей'
+            - value: '3'
+              newvalue: 'LB = Низкий уровень заряда батарей'
+            - value: '4'
+              newvalue: 'RB = Требуется замена батарей'
+            - value: '5'
+              newvalue: 'CHRG = Батареи заряжаются'
+            - value: '6'
+              newvalue: 'DISCHRG = Батареи разряжаются (работа через инвертор)'
+            - value: '7'
+              newvalue: 'BYPASS = Батарейная защита отсутствует'
+            - value: '8'
+              newvalue: 'CAL = Калибровка'
+            - value: '9'
+              newvalue: 'OFF = Выключен'
+            - value: '10'
+              newvalue: 'OVER = Перегрузка'
+            - value: '11'
+              newvalue: 'TRIM = Режим понижения входного напряжения'
+            - value: '12'
+              newvalue: 'BOOST = Режим повышения входного напряжения'
+  triggers:
+    - uuid: 31f3973a28f044c28c192376d3195d1d
+      expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.voltage])>last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.transfer.high])'
+      name: 'Состояние - Высокий уровень входного напряжения'
+      priority: HIGH
+    - uuid: a3ea02c8dfe549dca46583406ae14246
+      expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.voltage])<last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.transfer.low])'
+      name: 'Состояние - Низкий уровень входного напряжения'
+      priority: HIGH
+  graphs:
+    - uuid: d89d09fea7064d268aed49f96be42ff9
+      name: Нагрузка
+      graph_items:
+        - color: 1A7C11
+          item:
+            host: 'UPS APC Smart-UPS 1500 RM by NUT'
+            key: 'upsmon[{$UPSNAME},{$UPSHOST},ups.load]'
+    - uuid: d353c8a80aea40298b0896b307433646
+      name: 'Напряжение на входе/выходе'
+      graph_items:
+        - color: C80000
+          item:
+            host: 'UPS APC Smart-UPS 1500 RM by NUT'
+            key: 'upsmon[{$UPSNAME},{$UPSHOST},input.voltage]'
+        - sortorder: '1'
+          color: 00C800
+          item:
+            host: 'UPS APC Smart-UPS 1500 RM by NUT'
+            key: 'upsmon[{$UPSNAME},{$UPSHOST},output.voltage]'
+    - uuid: d887717d771149148d4f1b604ac5cc2f
+      name: 'Уровень заряда батарей'
+      graph_items:
+        - color: 1A7C11
+          item:
+            host: 'UPS APC Smart-UPS 1500 RM by NUT'
+            key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.charge]'
