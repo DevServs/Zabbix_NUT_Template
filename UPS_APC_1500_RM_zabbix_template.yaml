@@ -8,20 +8,17 @@ zabbix_export:
       template: 'UPS APC Smart-UPS 1500 RM by NUT'
       name: 'UPS APC Smart-UPS 1500 RM by NUT'
       description: |
-        Мониторинг ИБП на основе NUT.
-        
-        Основа: https://github.com/vasyna/Zabbix_nut_template/tree/main
-        Убрано автообнаружение.
-        
-        Создать узел ИБП, в котором указать Zabbix агент на том сервере, куда подключен ИБП и где настроен NUT. Прописать в макросах имя ИБП.
-        На тот же хост положить файлы:
-        -rw-r--r-- 1 root root /etc/zabbix/zabbix_agent2.d/nut-ups.conf
-        и
-        -r-x------ 1 zabbix zabbix /etc/zabbix/sh/nut-ups.sh
-        и перезапустить службу агента.
+        Мониторинг ИБП на основе NUT
+        https://github.com/DevServs/Zabbix_NUT_Template
       groups:
         - name: UPS
       items:
+        - uuid: fb74635f3ec64504a01e57d5ff566b04
+          name: 'Сервер ИБП доступен'
+          type: SIMPLE
+          key: 'net.tcp.service[tcp,{$UPSHOST},3493]'
+          valuemap:
+            name: 'Доступность NUT сервера'
         - uuid: 42cb9659eea94dec8e4bef7b73ae89d9
           name: 'Уровень низкого заряда батарей'
           key: 'upsmon[{$UPSNAME},{$UPSHOST},battery.charge.low]'
@@ -987,11 +984,23 @@ zabbix_export:
               newvalue: 'TRIM = Режим понижения входного напряжения'
             - value: '12'
               newvalue: 'BOOST = Режим повышения входного напряжения'
+        - uuid: 0e5acdf8c737437681c1d71cd5b85e6f
+          name: 'Доступность NUT сервера'
+          mappings:
+            - value: '0'
+              newvalue: Недоступен
+            - value: '1'
+              newvalue: ОК
   triggers:
     - uuid: 31f3973a28f044c28c192376d3195d1d
       expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.voltage])>last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.transfer.high])'
       name: 'Состояние - Высокий уровень входного напряжения'
       priority: HIGH
+    - uuid: 760f92eb827848e18fd82111f15a431d
+      expression: 'nodata(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},ups.status],1m)=1 or last(/UPS APC Smart-UPS 1500 RM by NUT/net.tcp.service[tcp,{$UPSHOST},3493],#1)=0'
+      name: 'Состояние - ИБП недоступен'
+      priority: DISASTER
+      description: 'ИБП недоступен! Нет данных.'
     - uuid: a3ea02c8dfe549dca46583406ae14246
       expression: 'last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.voltage])<last(/UPS APC Smart-UPS 1500 RM by NUT/upsmon[{$UPSNAME},{$UPSHOST},input.transfer.low])'
       name: 'Состояние - Низкий уровень входного напряжения'
